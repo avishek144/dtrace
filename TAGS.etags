@@ -1,0 +1,33 @@
+
+Dtrace.lisp,1116
+(defpackage dtrace1,0
+(defparameter *dtrace-print-length* 26,757
+(defparameter *dtrace-print-level* 27,796
+(defparameter *dtrace-print-circle* 28,834
+(defparameter *dtrace-print-pretty* 29,873
+(defparameter *dtrace-print-array* 30,914
+(defvar *traced-functions* 32,965
+(defvar *trace-level* 33,997
+(defmacro dtrace 35,1023
+(defun dtrace1 41,1262
+(defmacro with-dtrace-printer-settings 64,2181
+(defun trace-function 72,2457
+(defun trace-macro 91,3155
+(defun show-function-args 109,3835
+(defun handle-args-numerically 122,4322
+(defun handle-one-arg 127,4454
+(defun handle-keyword-args 133,4660
+(defmacro duntrace 144,5008
+(defun duntrace1 151,5267
+(defparameter *entry-arrow-string* 184,6566
+(defparameter *vertical-string* 185,6609
+(defparameter *exit-arrow-string* 186,6652
+(defparameter *trace-wraparound* 188,6696
+(defun display-function-entry 190,6734
+(defun display-one-arg 197,6931
+(defun display-arg-numeric 206,7110
+(defun display-function-return 210,7214
+(defun space-over 226,7670
+(defun draw-entry-arrow 231,7830
+(defun draw-exit-arrow 234,7911
+(defun fetch-arglist 247,8342
