@@ -1,10 +1,36 @@
+;; Dtrace.lisp -- Much better TRACE and UNTRACE.
+;; Copyright (C) 2024 by Avishek Gorai <avishekgorai@myyahoo.com>
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 (defpackage dtrace
-  (:use "LISP"))
+  (:documentation "DTRACE - This package contains DTRACE and DUNTRACE.
+Which works like TRACE and UNTRACE but produces more detailed trace display.")
+
+  (:export (quote
+            (dtrace::dtrace dtrace::duntrace
+                            *dtrace-print-length* *dtrace-print-level*
+	                    *dtrace-print-circle* *dtrace-print-pretty*
+                            *dtrace-print-array*)))
+  (:use "COMMON-LISP-USER"))
+
+
 
 ;;; -*- Mode: Lisp; Package: DTRACE -*-
 
 ;;; DTRACE is a portrble alternative to the Common Lisp TRACE and UNTRACE
-;;; macros. It offers a more detailed display than most tracing tools.
+;;; macros.  It offers a more detailed display than most tracing tools.
 ;;;
 ;;; From the book "Common Lisp: A Gentle Introduction to
 ;;;      Symbolic Computation" by David S. Touretzky.
@@ -15,9 +41,6 @@
 ;;;   DUNTRACE - same syntax as UNTRACE
 
 (in-package "DTRACE")
-
-(export '(dtrace duntrace *dtrace-print-length* *dtrace-print-level*
-	  *dtrace-print-circle* *dtrace-print-pretty* *dtrace-print-array*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -35,8 +58,8 @@
 (defmacro dtrace (&rest function-names)
   "Turns on detailed tracing for specified functions. Undo with DUNTRACE."
   (if (null function-names)
-      (list 'quote *traced-functions*)
-      (list 'quote (mapcan #'dtrace1 function-names))))
+      (list (quote quote) *traced-functions*)
+      (list (quote quote) (mapcan (function dtrace1) function-names))))
 
 (defun dtrace1 (name)
   (unless (symbolp name)
@@ -58,7 +81,7 @@
   (list name))
 
 ;;; The functions  below reference DISPLAY-xxx routines that can be made
-;;; implementation specific for fancy graphics. Generic versions of
+;;; implementation specific for fancy graphics.  Generic versions of
 ;;; these routines are defined later in this file.
 
 (defmacro with-dtrace-printer-settings (&body body)
@@ -73,7 +96,7 @@
   (let* ((formal-arglist (fetch-arglist name))
 	 (old-defn (symbol-function name))
 	 (new-defn
-	   #'(lambda (&rest argument-list)
+	   (function (lambda (&rest argument-list)
 	       (let ((result nil))
 		 (display-function-entry name)
 		 (let ((*trace-level* (1+ *trace-level*)))
@@ -82,28 +105,28 @@
 		   (setf result (multiple-value-list
 				 (apply old-defn argument-list))))
 		 (display-function-return name result)
-		 (values-list result)))))
-    (setf (get name 'original-definition) old-defn)
-    (setf (get name 'traced-definition) new-defn)
-    (setf (get name 'traced-type) 'defun)
+		 (values-list result))))))
+    (setf (get name (quote original-definition)) old-defn)
+    (setf (get name (quote traced-definition)) new-defn)
+    (setf (get name (quote traced-type)) (quote defun))
     (setf (symbol-function name) new-defn)))
 
 (defun trace-macro (name)
   (let* ((formal-arglist (fetch-arglist name))
 	 (old-defn (macro-function name))
 	 (new-defn
-	   #'(lambda (macro-args env)
+	   (function (lambda (macro-args env)
 	       (let ((result nil))
-		 (display-function-entry name 'macro)
+		 (display-function-entry name (quote macro))
 		 (let ((*trace-level* (1+ *trace-level*)))
 		   (with-dtrace-printer-settings
 		       (show-function-args macro-args formal-arglist))
 		   (setf result (funcall old-defn macro-args env)))
-		 (display-function-return name (list result) 'macro)
-		 (values result)))))
-    (setf (get name 'original-definition) old-defn)
-    (setf (get name 'traced-definition) new-defn)
-    (setf (get name 'traced-type) 'defmacro)
+		 (display-function-return name (list result) (quote macro))
+		 (values result))))))
+    (setf (get name (quote original-definition)) old-defn)
+    (setf (get name (quote traced-definition)) new-defn)
+    (setf (get name (quote traced-type)) (quote defmacro))
     (setf (macro-function name) new-defn)))
 
 (defun show-function-args (actuals formals &optional (argcount 0))
@@ -145,18 +168,18 @@
   "Turns off tracing for specified functions.
   With no arguments, turns off all tracing."
   (setf *trace-level* 0) ;; safety precaution
-  (list 'quote
-	(mapcan #'duntrace1 (or function-names *traced-functions* ))))
+  (list (quote quote)
+	(mapcan (function duntrace1) (or function-names *traced-functions* ))))
 
 (defun duntrace1 (name)
   (unless (symbolp name)
     (format *error-output* "~&~S is an invalid function name." name)
     (return-from duntrace1 nil))
   (setf *traced-functions* (delete name *traced-functions*))
-  (let ((orign-defn (get name 'original-definition 'none))
-	(traced-defn (get name 'traced-definition))
-	(traced-type (get name 'traced-type 'none)))
-    (unless (or (eq orign-defn 'none)
+  (let ((orign-defn (get name (quote original-definition) (quote none)))
+	(traced-defn (get name (quote traced-definition)))
+	(traced-type (get name (quote traced-type) (quote none))))
+    (unless (or (eq orign-defn (quote none))
 		(not (fboundp name))
 		(not (equal traced-defn  ;; did it get redefined?
 			    (ecase traced-type
@@ -165,9 +188,9 @@
       (ecase traced-type
 	(defun (setf (symbol-function name) orign-defn))
 	(defmacro (setf (macro-function name) orign-defn)))))
-  (remprop name 'traced-definition)
-  (remprop name 'traced-type)
-  (remprop name 'original-definition)
+  (remprop name (quote traced-definition))
+  (remprop name (quote traced-type))
+  (remprop name (quote original-definition))
   (list name))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -175,9 +198,9 @@
 ;;; Display routines
 ;;;
 ;;; The code below generates vanilla character output for ordinary
-;;; displays. It can be replaced with special graphics code if the
+;;; displays.  It can be replaced with special graphics code if the
 ;;; implementation permits, e.g., on a PC you can use the IBM graphic
-;;; character set to draw nicer-looking arrows. On a color PC you
+;;; character set to draw nicer-looking arrows.  On a color PC you
 ;;; can use different colors for arrows, for function names, for
 ;;; argument values, and so on.
 
@@ -191,7 +214,7 @@
   (space-over)
   (draw-entry-arrow)
   (format *trace-output* "Enter ~S" name)
-  (if (eq ftype 'macro)
+  (if (eq ftype (quote macro))
       (format *trace-output* " macro")))
 
 (defun display-one-arg (val name)
@@ -213,15 +236,15 @@
     (draw-exit-arrow)
     (format *trace-output* "~S ~A"
 	    name
-	    (if (eq ftype 'macro) "expanded to" "returned"))
+	    (if (eq ftype (quote macro)) "expanded to" "returned"))
     (cond ((null results))
 	  ((null (rest results))
 	   (format *trace-output* " ~S" (first results)))
 	  (t (format *trace-output* " values ~{~S, ~}~s"
 		     (butlast results)
 		     (car (last results)))))))
-    
-   
+
+
 
 (defun space-over ()
   (format *trace-output* "~&")
@@ -238,10 +261,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; The function FETCH-ARGLIST is implementation dependent. It
+;;; The function FETCH-ARGLIST is implementation dependent.  It
 ;;; returns the formal argument list of a function as it would
 ;;; appear in a DEFUN or lambda expression, including any lambda
-;;; list keywords. Here are versions of FETCH-ARGLIST for three
-;;; LISP implementations.
+;;; list keywords.  This one works with any legal implementation.
+;;; It returns nil, so the arguments are displayed as Arg-1, Arg-2,
+;;; etc.
 
 (defun fetch-arglist (fn) nil)
