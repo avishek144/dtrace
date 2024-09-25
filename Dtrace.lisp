@@ -1,4 +1,4 @@
-;; Dtrace.lisp -- Much better TRACE and UNTRACE.
+;; Dtrace.lisp -- Provides more detailed trace display than most implementations.
 ;; Copyright (C) 2024 by Avishek Gorai <avishekgorai@myyahoo.com>
 ;;
 ;; This program is free software: you can redistribute it and/or modify
@@ -14,33 +14,19 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-(defpackage dtrace
+(defpackage "DTRACE"
   (:documentation "DTRACE - This package contains DTRACE and DUNTRACE.
 Which works like TRACE and UNTRACE but produces more detailed trace display.")
 
-  (:export (quote
-            (dtrace::dtrace dtrace::duntrace
-                            *dtrace-print-length* *dtrace-print-level*
-	                    *dtrace-print-circle* *dtrace-print-pretty*
-                            *dtrace-print-array*)))
-  (:use "COMMON-LISP-USER"))
-
-
-
-;;; -*- Mode: Lisp; Package: DTRACE -*-
-
-;;; DTRACE is a portrble alternative to the Common Lisp TRACE and UNTRACE
-;;; macros.  It offers a more detailed display than most tracing tools.
-;;;
-;;; From the book "Common Lisp: A Gentle Introduction to
-;;;      Symbolic Computation" by David S. Touretzky.
-;;; The Benjamin/Cummings Publishing Co., 1989.
-;;;
-;;; User-level routine
-;;;   DTRACE - same syntax as TRACE
-;;;   DUNTRACE - same syntax as UNTRACE
+  (:use "COMMON-LISP-USER" "COMMON-LISP"))
 
 (in-package "DTRACE")
+
+(export (quote
+         (dtrace::dtrace dtrace::duntrace
+          *dtrace-print-length* *dtrace-print-level*
+          *dtrace-print-circle* *dtrace-print-pretty*
+          *dtrace-print-array*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -56,7 +42,10 @@ Which works like TRACE and UNTRACE but produces more detailed trace display.")
 (defvar *trace-level* 0)
 
 (defmacro dtrace (&rest function-names)
-  "Turns on detailed tracing for specified functions. Undo with DUNTRACE."
+  "(DTRACE &REST function-names)
+
+A macro which turns on detailed tracing for the specified
+functions.  Undo with DUNTRACE macro."
   (if (null function-names)
       (list (quote quote) *traced-functions*)
       (list (quote quote) (mapcan (function dtrace1) function-names))))
@@ -69,7 +58,7 @@ Which works like TRACE and UNTRACE but produces more detailed trace display.")
     (format *error-output* "~&~S undefined function." name)
     (return-from dtrace1 nil))
   (eval `(untrace ,name))        ;; if they're tracing it, undo their trace
-  (duntrace1 name)              ;; if we're tracing it, undo our trace
+  (duntrace1 name)               ;; if we're tracing it, undo our trace
   (when (special-operator-p name)
     (format *error-output*
 	    "~&Can't trace ~S because it's a special form." name)
@@ -165,8 +154,11 @@ Which works like TRACE and UNTRACE but produces more detailed trace display.")
 ;;; DUNTRACE and subordinate routines.
 
 (defmacro duntrace (&rest function-names)
-  "Turns off tracing for specified functions.
-  With no arguments, turns off all tracing."
+  "(DUNTRACE &REST function-names)
+
+A macro which turns off tracing for the specified functions
+which were traced using DTRACE macro.  With no arguments,
+turns off all tracing by DTRACE."
   (setf *trace-level* 0) ;; safety precaution
   (list (quote quote)
 	(mapcan (function duntrace1) (or function-names *traced-functions* ))))
