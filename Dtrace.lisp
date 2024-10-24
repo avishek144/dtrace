@@ -18,7 +18,7 @@
   (:documentation "DTRACE - This package contains DTRACE and DUNTRACE.
 Which works like TRACE and UNTRACE but produces more detailed trace display.")
 
-  (:use "COMMON-LISP-USER" "COMMON-LISP"))
+  (:use "COMMON-LISP"))
 
 (in-package "DTRACE")
 
