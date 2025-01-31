@@ -17,11 +17,6 @@
 
 (in-package "DTRACE")
 
-(export (quote
-         (dtrace duntrace *dtrace-print-length*
-                 *dtrace-print-level* *dtrace-print-circle*
-                 *dtrace-print-pretty* *dtrace-print-array*)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; DTRACE and subordinate routines.
