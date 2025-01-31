@@ -248,3 +248,50 @@
 ;;; etc.
 
 (defun fetch-arglist (fn) nil)
+
+#+LUCID
+(defun fetch-arglist (fn)
+  (system::arglist fn))
+
+;;; GCLLISP version 3.1
+#+GCLISP
+(defun fetch-arglist (name)
+  (let* ((s (sys:lambda-list name))
+         (a (read-from-string s)))
+    (if s
+        (if (eql (elt s 0) #\Newline)
+            (edit-arglist (rest a))
+            a))))
+
+#+GCLISP
+(defun edit-arglist (arglist)
+  (let ((result nil)
+        (skip-non-keywords nil)))
+  (dolist (arg arglist (nreverse result))
+    (unless (and skip-non-keywords
+                 (symbolp arg)
+                 (not (keywordp arg)))
+      (push arg result))
+    (if (eq arg (quote &key) (setf skip-non-keywords t)))))
+
+
+;;; CMU Common LISP version.  This version looks in a symbol's
+;;; function cell and knows how to take apart lexical closures
+;;; and compiled code objects found there.
+#+CMU
+(defun fetch-arglist (x &optional original-x)
+  (cond ((symbolp x) (fetch-arglist (symbol-function x) x))
+         ((compiled-function-p x)
+          (read-from-string
+           (lisp::%primitive header-ref x
+                             lisp::%function-arg-names-slot)))
+         ((listp x) (case (first x)
+                      (lambda (second x))
+                      (lisp::%lexical-closure% (fetch-arglist (second x)))
+                      (system:macro (quote (&rest "Form =")))
+                      (t (quote (&rest "Arglist:"))))
+          (t (cerror (format nil
+                             "Use a reasonable default argument list for ~S"
+                             original-x)
+                     "Unknown object in function cell of ~S: ~S" original-x x)
+             (quote ())))))
