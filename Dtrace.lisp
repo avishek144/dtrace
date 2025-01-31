@@ -14,19 +14,13 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-(defpackage "DTRACE"
-  (:documentation "DTRACE - This package contains DTRACE and DUNTRACE.
-Which works like TRACE and UNTRACE but produces more detailed trace display.")
-
-  (:use "COMMON-LISP-USER" "COMMON-LISP"))
 
 (in-package "DTRACE")
 
 (export (quote
-         (dtrace::dtrace dtrace::duntrace
-          *dtrace-print-length* *dtrace-print-level*
-          *dtrace-print-circle* *dtrace-print-pretty*
-          *dtrace-print-array*)))
+         (dtrace duntrace *dtrace-print-length*
+                 *dtrace-print-level* *dtrace-print-circle*
+                 *dtrace-print-pretty* *dtrace-print-array*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -42,10 +36,7 @@ Which works like TRACE and UNTRACE but produces more detailed trace display.")
 (defvar *trace-level* 0)
 
 (defmacro dtrace (&rest function-names)
-  "(DTRACE &REST function-names)
-
-A macro which turns on detailed tracing for the specified
-functions.  Undo with DUNTRACE macro."
+  "Turns on detailed tracing for the specified functions.  Undo with DUNTRACE."
   (if (null function-names)
       (list (quote quote) *traced-functions*)
       (list (quote quote) (mapcan (function dtrace1) function-names))))
@@ -154,11 +145,7 @@ functions.  Undo with DUNTRACE macro."
 ;;; DUNTRACE and subordinate routines.
 
 (defmacro duntrace (&rest function-names)
-  "(DUNTRACE &REST function-names)
-
-A macro which turns off tracing for the specified functions
-which were traced using DTRACE macro.  With no arguments,
-turns off all tracing by DTRACE."
+  "Turns off tracing for the specified functions which were traced using DTRACE macro.  With no arguments, turns off all tracing by DTRACE."
   (setf *trace-level* 0) ;; safety precaution
   (list (quote quote)
 	(mapcan (function duntrace1) (or function-names *traced-functions* ))))
