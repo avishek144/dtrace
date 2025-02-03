@@ -1,8 +1,0 @@
-There is one implementation-dependent function: FETCH-ARGLIST.  It
-takes a symbol as input and returns the argument list of the function
-named by that symbol.  Here it is defined to return NIl, so, the
-arguments will be displayed as Arg-1, Arg-2, and so on.  Modify this
-using your implementation's function which returns returns the
-argument list.
-
-After that, just load Dtrace.lisp using LOAD function.
