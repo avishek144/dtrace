@@ -1,21 +1,21 @@
-;; Dtrace.lisp -- Provides more detailed trace display than most implementations.
-;; Copyright (C) 2024 by Avishek Gorai <avishekgorai@myyahoo.com>
+;;; Dtrace.lisp -- Provides more detailed trace display than most implementations.
+;;; Copyright (C) 2024, 2025 by Avishek Gorai <avishekgorai@myyahoo.com>
 
-;; This program is free software: you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
+;;; This program is free software: you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation, either version 3 of the License, or
+;;; (at your option) any later version.
 
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
 
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+;;; You should have received a copy of the GNU General Public License
+;;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-(in-package "DTRACE")
+(in-package dtrace)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -43,11 +43,11 @@
   (unless (fboundp name)
     (format *error-output* "~&~S undefined function." name)
     (return-from dtrace1 nil))
-  (eval `(untrace ,name))        ;; if they're tracing it, undo their trace
-  (duntrace1 name)               ;; if we're tracing it, undo our trace
+  (eval `(untrace ,name))        ;; if they are tracing it, undo their trace
+  (duntrace1 name)               ;; if we are tracing it, undo our trace
   (when (special-operator-p name)
     (format *error-output*
-	    "~&Can't trace ~S because it's a special form." name)
+	    "~&Cannot trace ~S because it is a special form." name)
     (return-from dtrace1 nil))
   (if (macro-function name)
       (trace-macro name)

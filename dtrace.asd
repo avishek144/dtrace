@@ -1,4 +1,4 @@
-;;; package.lisp -- Dtrace package definition.
+;;; Dtrace.asd -- Dtrace system definition.
 ;;; Copyright (C) 2024, 2025 by Avishek Gorai <avishekgorai@myyahoo.com>
 
 ;;; This program is free software: you can redistribute it and/or modify
@@ -16,13 +16,11 @@
 
 
 
-(defpackage dtrace
-  (:use common-lisp)
-  (:export dtrace
-           duntrace
-           *dtrace-print-length*
-           *dtrace-print-level*
-           *dtrace-print-circle*
-           *dtrace-print-pretty*
-           *dtrace-print-array*)
-  (:documentation "This package contains DTRACE and DUNTRACE. Which works like TRACE and UNTRACE but produces more detailed trace display."))
+(asdf:defsystem dtrace
+  :description "This package constains two functions DTRACE which provides more detailed trace display than most implementation specific TRACE.  It also has some parameters which control the behaviour of DTRACE."
+  :author "Avishek Gorai <avishekgorai@myyahoo.com>"
+  :license  "GNU General Public License version 3 or later"
+  :version "1.5"
+  :serial t
+  :components ((:file "package")
+               (:file "dtrace")))
