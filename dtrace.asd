@@ -16,7 +16,7 @@
 
 
 
-(asdf:defsystem dtrace
+(asdf:defsystem #:dtrace
   :description "This package constains two functions DTRACE which provides more detailed trace display than most implementation specific TRACE.  It also has some parameters which control the behaviour of DTRACE."
   :author "Avishek Gorai <avishekgorai@myyahoo.com>"
   :license  "GNU General Public License version 3 or later"

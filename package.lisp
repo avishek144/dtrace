@@ -16,8 +16,8 @@
 
 
 
-(defpackage dtrace
-  (:use common-lisp)
+(defpackage #:dtrace
+  (:use #:common-lisp)
   (:export dtrace
            duntrace
            *dtrace-print-length*
