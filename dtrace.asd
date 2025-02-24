@@ -1,4 +1,4 @@
-;;; Dtrace.asd -- Dtrace system definition.
+;;; dtrace.asd -- Dtrace system definition.
 ;;; Copyright (C) 2024, 2025 by Avishek Gorai <avishekgorai@myyahoo.com>
 ;;;
 ;;; This program is free software: you can redistribute it and/or modify

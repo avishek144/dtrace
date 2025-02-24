@@ -1,4 +1,4 @@
-;;; Dtrace.lisp -- Provides more detailed trace display than most implementations.
+;;; dtrace.lisp -- Provides more detailed trace display than most implementations.
 ;;; Copyright (C) 2024, 2025 by Avishek Gorai <avishekgorai@myyahoo.com>
 ;;;
 ;;; This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 (defvar *trace-level* 0)
 
 (defmacro dtrace (&rest function-names)
-  "Turns on detailed tracing for the specified functions.  Undo with DUNTRACE."
+  "Turns on more detailed tracing.  Undo with DUNTRACE."
   (if (null function-names)
       (list (quote quote) *traced-functions*)
       (list (quote quote) (mapcan (function dtrace1) function-names))))
@@ -140,7 +140,7 @@
 ;;; DUNTRACE and subordinate routines.
 
 (defmacro duntrace (&rest function-names)
-  "Turns off tracing for the specified functions which were traced using DTRACE macro.  With no arguments, turns off all tracing by DTRACE."
+  "Turns off tracing for the functions which were traced using DTRACE macro.  With no arguments, turns off all tracing by DTRACE."
   (setf *trace-level* 0) ;; safety precaution
   (list (quote quote)
 	(mapcan (function duntrace1) (or function-names *traced-functions* ))))
