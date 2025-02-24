@@ -1,32 +1,21 @@
-;; Dtrace.lisp -- Provides more detailed trace display than most implementations.
-;; Copyright (C) 2024 by Avishek Gorai <avishekgorai@myyahoo.com>
-;;
-;; This program is free software: you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
-;;
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-;;
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+;;; Dtrace.lisp -- Provides more detailed trace display than most implementations.
+;;; Copyright (C) 2024, 2025 by Avishek Gorai <avishekgorai@myyahoo.com>
+;;;
+;;; This program is free software: you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation, either version 3 of the License, or
+;;; (at your option) any later version.
+;;;
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;;
+;;; You should have received a copy of the GNU General Public License
+;;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-(defpackage "DTRACE"
-  (:documentation "DTRACE - This package contains DTRACE and DUNTRACE.
-Which works like TRACE and UNTRACE but produces more detailed trace display.")
 
-  (:use "COMMON-LISP"))
-
-(in-package "DTRACE")
-
-(export (quote
-         (dtrace::dtrace dtrace::duntrace
-          *dtrace-print-length* *dtrace-print-level*
-          *dtrace-print-circle* *dtrace-print-pretty*
-          *dtrace-print-array*)))
+(in-package #:dtrace)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -42,10 +31,7 @@ Which works like TRACE and UNTRACE but produces more detailed trace display.")
 (defvar *trace-level* 0)
 
 (defmacro dtrace (&rest function-names)
-  "(DTRACE &REST function-names)
-
-A macro which turns on detailed tracing for the specified
-functions.  Undo with DUNTRACE macro."
+  "Turns on detailed tracing for the specified functions.  Undo with DUNTRACE."
   (if (null function-names)
       (list (quote quote) *traced-functions*)
       (list (quote quote) (mapcan (function dtrace1) function-names))))
@@ -57,11 +43,11 @@ functions.  Undo with DUNTRACE macro."
   (unless (fboundp name)
     (format *error-output* "~&~S undefined function." name)
     (return-from dtrace1 nil))
-  (eval `(untrace ,name))        ;; if they're tracing it, undo their trace
-  (duntrace1 name)               ;; if we're tracing it, undo our trace
+  (eval `(untrace ,name))        ;; if they are tracing it, undo their trace
+  (duntrace1 name)               ;; if we are tracing it, undo our trace
   (when (special-operator-p name)
     (format *error-output*
-	    "~&Can't trace ~S because it's a special form." name)
+	    "~&Cannot trace ~S because it is a special form." name)
     (return-from dtrace1 nil))
   (if (macro-function name)
       (trace-macro name)
@@ -154,11 +140,7 @@ functions.  Undo with DUNTRACE macro."
 ;;; DUNTRACE and subordinate routines.
 
 (defmacro duntrace (&rest function-names)
-  "(DUNTRACE &REST function-names)
-
-A macro which turns off tracing for the specified functions
-which were traced using DTRACE macro.  With no arguments,
-turns off all tracing by DTRACE."
+  "Turns off tracing for the specified functions which were traced using DTRACE macro.  With no arguments, turns off all tracing by DTRACE."
   (setf *trace-level* 0) ;; safety precaution
   (list (quote quote)
 	(mapcan (function duntrace1) (or function-names *traced-functions* ))))
@@ -261,3 +243,50 @@ turns off all tracing by DTRACE."
 ;;; etc.
 
 (defun fetch-arglist (fn) nil)
+
+#+LUCID
+(defun fetch-arglist (fn)
+  (system::arglist fn))
+
+;;; GCLLISP version 3.1
+#+GCLISP
+(defun fetch-arglist (name)
+  (let* ((s (sys:lambda-list name))
+         (a (read-from-string s)))
+    (if s
+        (if (eql (elt s 0) #\Newline)
+            (edit-arglist (rest a))
+            a))))
+
+#+GCLISP
+(defun edit-arglist (arglist)
+  (let ((result nil)
+        (skip-non-keywords nil)))
+  (dolist (arg arglist (nreverse result))
+    (unless (and skip-non-keywords
+                 (symbolp arg)
+                 (not (keywordp arg)))
+      (push arg result))
+    (if (eq arg (quote &key) (setf skip-non-keywords t)))))
+
+
+;;; CMU Common LISP version.  This version looks in a symbol's
+;;; function cell and knows how to take apart lexical closures
+;;; and compiled code objects found there.
+#+CMU
+(defun fetch-arglist (x &optional original-x)
+  (cond ((symbolp x) (fetch-arglist (symbol-function x) x))
+         ((compiled-function-p x)
+          (read-from-string
+           (lisp::%primitive header-ref x
+                             lisp::%function-arg-names-slot)))
+         ((listp x) (case (first x)
+                      (lambda (second x))
+                      (lisp::%lexical-closure% (fetch-arglist (second x)))
+                      (system:macro (quote (&rest "Form =")))
+                      (t (quote (&rest "Arglist:"))))
+          (t (cerror (format nil
+                             "Use a reasonable default argument list for ~S"
+                             original-x)
+                     "Unknown object in function cell of ~S: ~S" original-x x)
+             (quote ())))))
